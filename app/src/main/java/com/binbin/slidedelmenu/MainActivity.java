@@ -95,12 +95,15 @@ public class MainActivity extends AppCompatActivity {
                     }else if(type==1){
                         switch (view.getId()){
                             case R.id.menu_delete:
-                                mi.hideMenuSmooth();
+                                mi.delItem();
                                 str.remove(pos);
-                                notifyDataSetChanged();
+//                                notifyDataSetChanged();
                                 break;
                             case R.id.menu_hello:
                                 Toast.makeText(MainActivity.this, "hello"+pos, Toast.LENGTH_SHORT).show();
+                                break;
+                            case R.id.bt:
+                                Toast.makeText(MainActivity.this, "button=========="+pos, Toast.LENGTH_SHORT).show();
                                 break;
                         }
                     }

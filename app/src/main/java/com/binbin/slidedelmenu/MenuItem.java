@@ -1,9 +1,12 @@
 package com.binbin.slidedelmenu;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.database.Cursor;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.support.v4.view.GestureDetectorCompat;
+import android.support.v4.widget.ScrollerCompat;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -12,9 +15,16 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.animation.Interpolator;
+import android.widget.AbsListView;
 import android.widget.BaseAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.Scroller;
 import android.widget.Toast;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * Created by -- on 2016/11/3.
@@ -24,6 +34,7 @@ import android.widget.Toast;
 public class MenuItem extends ViewGroup {
     private GestureDetector mGestureDetector;
     private ViewDragHelper mDragger;
+    private ViewDragHelper.Callback callback;
     private int contentWidth;
     private int maxWidth,maxHeight;//viewGroup的宽高
     private static final int MIN_FLING_VELOCITY = 600; // dips per second
@@ -61,7 +72,7 @@ public class MenuItem extends ViewGroup {
         final float density = getContext().getResources().getDisplayMetrics().density;
         contentWidth=getContext().getResources().getDisplayMetrics().widthPixels;
         mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
-        mDragger = ViewDragHelper.create(this, 0.5f, new ViewDragHelper.Callback() {
+        callback=new ViewDragHelper.Callback() {
             @Override
             public boolean tryCaptureView(View child, int pointerId) {
                 return item==child;
@@ -81,7 +92,7 @@ public class MenuItem extends ViewGroup {
 
             @Override
             public int getViewHorizontalDragRange(View child) {
-                return menu.getMeasuredWidth();
+                return  -menu.getMeasuredWidth();
             }
 
             @Override
@@ -128,7 +139,8 @@ public class MenuItem extends ViewGroup {
                 super.onViewCaptured(capturedChild, activePointerId);
 //                Log.e("tianbin",capturedChild+"=========onViewCaptured============");
             }
-        });
+        };
+        mDragger = ViewDragHelper.create(this, 0.5f,callback );
         mDragger.setMinVelocity(MIN_FLING_VELOCITY * density);
         mGestureDetector=new GestureDetector(getContext(),new GestureDetector.SimpleOnGestureListener(){
             @Override
@@ -144,7 +156,7 @@ public class MenuItem extends ViewGroup {
             public boolean onSingleTapUp(MotionEvent e) {
 //                Log.e("tianbin","=====onSingleTapUp======");
                 if(onClickListener!=null){
-                    onClickListener.onClick(null,0);
+                    onClickListener.onClick(item,0);
                 }
                 return true;
             }
@@ -174,25 +186,51 @@ public class MenuItem extends ViewGroup {
         });
     }
 
+    /**
+     * 两种方案
+     * 1.通过反射，使动画时间为0
+     * 2.在动画结束后去更新列表
+     */
+    public void delItem(){
+        setOnDelAnimationEnd(new OnDelAnimationEnd() {
+            @Override
+            public void onDelAnimationEnd() {
+                ListAdapter adapter=((ListView)MenuItem.this.getParent()).getAdapter();
+                if(adapter instanceof BaseAdapter){
+                    ((BaseAdapter)adapter).notifyDataSetChanged();
+                }
+            }
+        });
+        hideMenuSmooth();
+    }
+
+//    public void hideMenuNoAnim(){
+//        try {
+//            Class clazz=ViewDragHelper.class;
+//            Field mCapturedView=clazz.getDeclaredField("mCapturedView");
+//            Field mActivePointerId=clazz.getDeclaredField("mActivePointerId");
+//            Object object = mDragger;
+//            mCapturedView.setAccessible(true);
+//            mCapturedView.set(object,item);
+//            mCapturedView.setAccessible(false);
+//            mActivePointerId.setAccessible(true);
+//            mActivePointerId.set(object,-1);
+//            mActivePointerId.setAccessible(false);
+//            Method me=clazz.getDeclaredMethod("forceSettleCapturedViewAt", int.class,int.class,int.class,int.class);
+//            me.setAccessible(true);
+//            me.invoke(object, 0,0,Integer.MAX_VALUE,0);
+//            me.setAccessible(false);
+//        } catch (Exception e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+//        invalidate();
+//    }
+
     public void hideMenuSmooth(){
         mDragger.smoothSlideViewTo(item,0,0);
         invalidate();
         isMenuVisible=false;
-    }
-
-//    public void hideMenu(){
-//        item.setTranslationX(menu.getMeasuredWidth());
-//        menu.setTranslationX(menu.getWidth());
-//    }
-
-    public void hideAllMenuSmooth(){
-        ListView listView= (ListView) getParent();
-        for (int i = 0; i <=listView.getLastVisiblePosition()-listView.getFirstVisiblePosition(); i++) {
-            MenuItem mi= (MenuItem) listView.getChildAt(i);
-            if(mi.getIsMenuVisible()){
-                mi.hideMenuSmooth();
-            }
-        }
     }
 
     public boolean getIsMenuVisible(){
@@ -209,6 +247,7 @@ public class MenuItem extends ViewGroup {
         this.menu=menu;
         addView(item,0,new LayoutParams(-1,-1));
         addView(menu,1,new LayoutParams(-2,-1));
+        //菜单子view点击事件
         for (int i = 0; i < ((ViewGroup)menu).getChildCount(); i++) {
             View v=((ViewGroup)menu).getChildAt(i);
             v.setOnClickListener(new View.OnClickListener() {
@@ -219,6 +258,19 @@ public class MenuItem extends ViewGroup {
                     }
                 }
             });
+        }
+        //item子view点击事件
+        int childCount=((ViewGroup)item).getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            View child=((ViewGroup)item).getChildAt(i);
+            if(child.isClickable()){
+                child.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        onClickListener.onClick(v,1);
+                    }
+                });
+            }
         }
     }
 
@@ -373,7 +425,20 @@ public class MenuItem extends ViewGroup {
     public void computeScroll() {
         if(mDragger.continueSettling(true)) {
             invalidate();
+        }else{
+            if(onDelAnimationEnd!=null){
+                onDelAnimationEnd.onDelAnimationEnd();
+                onDelAnimationEnd=null;
+            }
         }
+    }
+    private OnDelAnimationEnd onDelAnimationEnd;
+    private void setOnDelAnimationEnd(OnDelAnimationEnd onDelAnimationEnd){
+        this.onDelAnimationEnd=onDelAnimationEnd;
+    }
+
+    private interface OnDelAnimationEnd{
+        void onDelAnimationEnd();
     }
 
     private OnClickListener onClickListener;

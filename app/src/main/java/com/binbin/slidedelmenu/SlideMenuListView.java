@@ -54,7 +54,7 @@ public class SlideMenuListView extends ListView {
                     MenuItem mi=(MenuItem)getChildAt(i);
                     if(mi.getIsMenuVisible()){
                         //当有菜单出现时，按下非菜单区域就隐藏菜单，并消费此次触摸事件，不再向下传递
-                        if(!inRangeOfView(mi.getChildAt(1),ev)){
+                        if(!Utils.inRangeOfView(mi.getChildAt(1),ev)){
                             mi.hideMenuSmooth();
                             return true;
                         }
@@ -86,22 +86,4 @@ public class SlideMenuListView extends ListView {
 //        return super.onTouchEvent(ev);
 //    }
 
-    /**
-     * 判断是否点击在view的内部
-     * @param view
-     * @param ev
-     * @return
-     *            true 点击在view的内部
-     *            false 点击在view的外部
-     */
-    private boolean inRangeOfView(View view, MotionEvent ev) {
-        int[] location = new int[2];
-        view.getLocationOnScreen(location);
-        int x = location[0];
-        int y=location[1];
-        if (ev.getRawX() < x || ev.getRawX() > (x + view.getWidth())||ev.getRawY()<y||ev.getRawY()>(y+view.getHeight())) {
-            return false;
-        }
-        return true;
-    }
 }
