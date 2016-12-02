@@ -1,5 +1,6 @@
 package com.binbin.slidedelmenu;
 
+import android.content.Intent;
 import android.database.DataSetObserver;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -101,6 +102,9 @@ public class MainActivity extends AppCompatActivity {
                                 break;
                             case R.id.menu_hello:
                                 Toast.makeText(MainActivity.this, "hello"+pos, Toast.LENGTH_SHORT).show();
+                                if(pos==0){
+                                    startActivity(new Intent(MainActivity.this,SecondActivity.class));
+                                }
                                 break;
                             case R.id.bt:
                                 Toast.makeText(MainActivity.this, "button=========="+pos, Toast.LENGTH_SHORT).show();
