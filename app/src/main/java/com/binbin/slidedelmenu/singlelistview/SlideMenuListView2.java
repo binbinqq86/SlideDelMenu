@@ -1,4 +1,4 @@
-package com.binbin.slidedelmenu;
+package com.binbin.slidedelmenu.singlelistview;
 
 import android.content.Context;
 import android.os.Build;
@@ -12,6 +12,9 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.Scroller;
+
+import com.binbin.slidedelmenu.R;
+import com.binbin.slidedelmenu.Utils;
 
 /**
  * Created by -- on 2016/11/8.

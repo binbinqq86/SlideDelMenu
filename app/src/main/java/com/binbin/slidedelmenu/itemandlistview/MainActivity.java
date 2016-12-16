@@ -1,18 +1,18 @@
-package com.binbin.slidedelmenu;
+package com.binbin.slidedelmenu.itemandlistview;
 
 import android.content.Intent;
-import android.database.DataSetObserver;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.ListViewCompat;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.binbin.slidedelmenu.R;
+import com.binbin.slidedelmenu.item.ThirdActivity;
+import com.binbin.slidedelmenu.singlelistview.SecondActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,6 +104,8 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.makeText(MainActivity.this, "hello"+pos, Toast.LENGTH_SHORT).show();
                                 if(pos==0){
                                     startActivity(new Intent(MainActivity.this,SecondActivity.class));
+                                }else if(pos==1){
+                                    startActivity(new Intent(MainActivity.this,ThirdActivity.class));
                                 }
                                 break;
                             case R.id.bt:

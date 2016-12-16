@@ -1,14 +1,14 @@
-package com.binbin.slidedelmenu;
+package com.binbin.slidedelmenu.itemandlistview;
 
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.ListView;
+
+import com.binbin.slidedelmenu.Utils;
 
 /**
  * Created by -- on 2016/11/3.

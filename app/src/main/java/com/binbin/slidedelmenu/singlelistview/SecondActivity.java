@@ -1,14 +1,14 @@
-package com.binbin.slidedelmenu;
+package com.binbin.slidedelmenu.singlelistview;
 
-import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import com.binbin.slidedelmenu.R;
 
 import java.util.ArrayList;
 import java.util.List;
