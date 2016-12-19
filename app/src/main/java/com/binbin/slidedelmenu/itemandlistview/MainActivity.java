@@ -11,7 +11,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.binbin.slidedelmenu.R;
+import com.binbin.slidedelmenu.item.RecyclerViewActivity;
 import com.binbin.slidedelmenu.item.ThirdActivity;
+import com.binbin.slidedelmenu.item2.FourthActivity;
 import com.binbin.slidedelmenu.singlelistview.SecondActivity;
 
 import java.util.ArrayList;
@@ -106,6 +108,10 @@ public class MainActivity extends AppCompatActivity {
                                     startActivity(new Intent(MainActivity.this,SecondActivity.class));
                                 }else if(pos==1){
                                     startActivity(new Intent(MainActivity.this,ThirdActivity.class));
+                                }else if(pos==2){
+                                    startActivity(new Intent(MainActivity.this,FourthActivity.class));
+                                }else if(pos==3){
+                                    startActivity(new Intent(MainActivity.this,RecyclerViewActivity.class));
                                 }
                                 break;
                             case R.id.bt:

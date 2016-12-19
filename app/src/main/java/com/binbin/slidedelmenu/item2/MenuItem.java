@@ -1,21 +1,19 @@
-package com.binbin.slidedelmenu.item;
+package com.binbin.slidedelmenu.item2;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
-import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.FrameLayout;
-import android.widget.ListAdapter;
-import android.widget.ListView;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
 import android.widget.Scroller;
 
 /**
@@ -49,6 +47,7 @@ public class MenuItem extends ViewGroup {
     //增加一个布尔值变量，dispatch函数里，每次down时，为true，move时判断，如果是滑动动作，设为false。
     //在Intercept函数的up时，判断这个变量，如果仍为true 说明是点击事件，则关闭菜单。
     private boolean isUnMoved = true;
+    private View mContentView;
 
     public MenuItem(Context context) {
         this(context,null);
@@ -99,6 +98,7 @@ public class MenuItem extends ViewGroup {
                     }
                     mRightMenuWidths+=childView.getMeasuredWidth();
                 }else{
+                    mContentView=childView;
                     if(childView.getLayoutParams().width!= LayoutParams.MATCH_PARENT){
                         //content的宽必须MATCH_PARENT
                         throw new IllegalArgumentException("======content'width must be MATCH_PARENT=====");
@@ -271,24 +271,96 @@ public class MenuItem extends ViewGroup {
         return super.onInterceptTouchEvent(ev);
     }
 
-    @Override
+//平滑滚动 弃用 改属性动画实现
+/*    @Override
     public void computeScroll() {
-        if(mScroller.computeScrollOffset()) {
+        //判断Scroller是否执行完毕：
+        if (mScroller.computeScrollOffset()) {
             scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
+            //通知View重绘-invalidate()->onDraw()->computeScroll()
             invalidate();
+        }
+    }*/
+    /**
+     * 平滑展开
+     */
+    private ValueAnimator mExpandAnim, mCloseAnim;
+
+    private boolean isExpand;//代表当前是否是展开状态 2016 11 03 add
+
+    public void smoothExpand() {
+        /*mScroller.startScroll(getScrollX(), 0, mRightMenuWidths - getScrollX(), 0);
+        invalidate();*/
+        //展开就加入ViewCache：
+        mViewCache = this;
+
+        //2016 11 13 add 侧滑菜单展开，屏蔽content长按
+        if (null != mContentView) {
+            mContentView.setLongClickable(false);
+        }
+
+        cancelAnim();
+        mExpandAnim = ValueAnimator.ofInt(getScrollX(), mRightMenuWidths);
+        mExpandAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                scrollTo((Integer) animation.getAnimatedValue(), 0);
+            }
+        });
+        mExpandAnim.setInterpolator(new OvershootInterpolator());
+        mExpandAnim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                isExpand = true;
+            }
+        });
+        mExpandAnim.setDuration(300).start();
+    }
+
+    /**
+     * 每次执行动画之前都应该先取消之前的动画
+     */
+    private void cancelAnim() {
+        if (mCloseAnim != null && mCloseAnim.isRunning()) {
+            mCloseAnim.cancel();
+        }
+        if (mExpandAnim != null && mExpandAnim.isRunning()) {
+            mExpandAnim.cancel();
         }
     }
 
-    private void smoothExpand(){
-        mViewCache=MenuItem.this;
-        mScroller.startScroll(getScrollX(),0,mRightMenuWidths-getScrollX(),0);
-        invalidate();
-    }
+    /**
+     * 平滑关闭
+     */
+    public void smoothClose() {
+        //Log.d(TAG, "smoothClose() called" + this);
+/*        mScroller.startScroll(getScrollX(), 0, -getScrollX(), 0);
+        invalidate();*/
+        mViewCache = null;
 
-    private void smoothClose(){
-        mViewCache=null;
-        mScroller.startScroll(getScrollX(),0,-getScrollX(),0);
-        invalidate();
+        //2016 11 13 add 侧滑菜单展开，屏蔽content长按
+        if (null != mContentView) {
+            mContentView.setLongClickable(true);
+        }
+
+        cancelAnim();
+        mCloseAnim = ValueAnimator.ofInt(getScrollX(), 0);
+        mCloseAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                scrollTo((Integer) animation.getAnimatedValue(), 0);
+            }
+        });
+        mCloseAnim.setInterpolator(new AccelerateInterpolator());
+        mCloseAnim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                isExpand = false;
+
+            }
+        });
+        mCloseAnim.setDuration(300).start();
+        //LogUtils.d(TAG, "smoothClose() called with:getScrollX() " + getScrollX());
     }
 
     /**
@@ -299,8 +371,10 @@ public class MenuItem extends ViewGroup {
      */
     public void quickClose() {
         if (this == mViewCache) {
-//            mViewCache.scrollTo(0, 0);//关闭
-            mScroller.startScroll(0,0,0,0,0);
+            //先取消展开动画
+            cancelAnim();
+            mViewCache.scrollTo(0, 0);//关闭
+//            mScroller.startScroll(0,0,0,0,0);
             mViewCache = null;
         }
     }
@@ -318,13 +392,13 @@ public class MenuItem extends ViewGroup {
     }
 
     //展开时，禁止长按
-//    @Override
-//    public boolean performLongClick() {
-//        if (Math.abs(getScrollX()) > mTouchSlop) {
-//            return false;
-//        }
-//        return super.performLongClick();
-//    }
+    @Override
+    public boolean performLongClick() {
+        if (Math.abs(getScrollX()) > mTouchSlop) {
+            return false;
+        }
+        return super.performLongClick();
+    }
 
     /**
      * @param event 向VelocityTracker添加MotionEvent

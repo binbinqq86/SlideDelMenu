@@ -17,6 +17,10 @@
         </activity>
         <activity android:name=".singlelistview.SecondActivity"></activity>
         <activity android:name=".item.ThirdActivity"/>
+        <activity android:name=".item2.FourthActivity"/>
+        <activity android:name=".item.RecyclerViewActivity"
+            android:theme="@style/AppTheme">
+        </activity>
     </application>
 
 </manifest>

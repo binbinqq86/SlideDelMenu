@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.binbin.slidedelmenu.item.MenuItem xmlns:android="http://schemas.android.com/apk/res/android"
+<com.binbin.slidedelmenu.item2.MenuItem xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:background="#e0ccdd"
@@ -52,4 +52,4 @@
         android:text="del"
         android:textColor="#fff"
         android:textSize="15sp" />
-</com.binbin.slidedelmenu.item.MenuItem>
+</com.binbin.slidedelmenu.item2.MenuItem>
