@@ -19,7 +19,7 @@ import com.binbin.slidedelmenu.Utils;
 /**
  * Created by -- on 2016/11/8.
  */
-
+@Deprecated
 public class SlideMenuListView2 extends ListView {
     private static final String TAG="tianbin";
     /**最小滑动距离，超过了，才认为开始滑动  */

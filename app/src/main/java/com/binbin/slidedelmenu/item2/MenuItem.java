@@ -20,7 +20,7 @@ import android.widget.Scroller;
  * Created by -- on 2016/11/3.
  * 带侧滑菜单的自定义item
  */
-
+@Deprecated
 public class MenuItem extends ViewGroup {
     private int contentWidth;
     private Scroller mScroller;

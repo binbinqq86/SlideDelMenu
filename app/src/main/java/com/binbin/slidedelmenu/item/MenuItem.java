@@ -36,7 +36,7 @@ public class MenuItem extends ViewGroup {
     private float mFirstX = -1;
     private int ratio;
     //防止多只手指一起滑动的flag 在每次down里判断， touch事件结束清空
-    private static boolean isTouching;
+    private boolean canDrag;
     private int mRightMenuWidths;//右侧菜单总宽度
     private VelocityTracker mVelocityTracker;
     private float mMaxVelocity;
@@ -151,38 +151,44 @@ public class MenuItem extends ViewGroup {
     public boolean dispatchTouchEvent(MotionEvent ev) {
         acquireVelocityTracker(ev);
         final VelocityTracker verTracker = mVelocityTracker;
-        switch (ev.getAction()){
+        switch (ev.getActionMasked()){
             case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN:
 //                Log.e("tianbin","======MenuItem dispatchTouchEvent======ACTION_DOWN==="+isTouching);
-                if (isTouching) {//如果有别的指头摸过了，那么就return false。这样后续的move...等事件也不会再来找这个View了。
-                    return false;
-                } else {
-                    isTouching = true;//第一个摸的指头，赶紧改变标志，宣誓主权。
-                }
-                mLastX=ev.getRawX();
-                mFirstX=ev.getRawX();
-                //求第一个触点的id， 此时可能有多个触点，但至少一个，计算滑动速率用
-                mPointerId = ev.getPointerId(0);
-                isUserSwiped = false;
-                qqInterceptFlag=false;
-                isUnMoved=true;
-                //如果down，view和cacheview不一样，则立马让它还原。且把它置为null
-                if (mViewCache != null) {
-                    if (mViewCache != this) {
-                        mViewCache.smoothClose();
-                        qqInterceptFlag = isQQ;//当前有侧滑菜单的View，且不是自己的，就该拦截事件咯。
+                if(ev.getPointerId(ev.getActionIndex())==0){
+                    canDrag=true;
+                    mLastX=ev.getX();
+                    mFirstX=ev.getX();
+                    //求第一个触点的id， 此时可能有多个触点，但至少一个，计算滑动速率用
+                    mPointerId = ev.getPointerId(0);
+                    isUserSwiped = false;
+                    qqInterceptFlag=false;
+                    isUnMoved=true;
+                    //如果down，view和cacheview不一样，则立马让它还原。且把它置为null
+                    if (mViewCache != null) {
+                        if (mViewCache != this) {
+                            mViewCache.smoothClose();
+                            qqInterceptFlag = isQQ;//当前有侧滑菜单的View，且不是自己的，就该拦截事件咯。
+                        }
+                        //只要有一个侧滑菜单处于打开状态， 就不给外层布局上下滑动了
+                        getParent().requestDisallowInterceptTouchEvent(true);
                     }
-                    //只要有一个侧滑菜单处于打开状态， 就不给外层布局上下滑动了
-                    getParent().requestDisallowInterceptTouchEvent(true);
+                }else{
+                    //如果有别的指头摸过了，那么就return false。这样后续的move...等事件也不会再来找这个View了。
+                    return false;
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
+                if(!canDrag){
+                    break;
+                }
+                int pointerIndex=ev.findPointerIndex(0);
                 if(qqInterceptFlag){//当前有侧滑菜单的View，且不是自己的，就该拦截事件咯。滑动也不该出现
                     break;
                 }
 //                Log.e("tianbin","======MenuItem dispatchTouchEvent======ACTION_MOVE===11111111111111");
-                float deltaX= ev.getRawX()-mLastX;
-                mLastX=ev.getRawX();
+                float deltaX= ev.getX(pointerIndex)-mLastX;
+                mLastX=ev.getX(pointerIndex);
                 //为了在水平滑动中禁止父类ListView等再竖直滑动
                 if (Math.abs(deltaX) > 10 || Math.abs(getScrollX()) > 10) {//使屏蔽父布局滑动更加灵敏，
                     getParent().requestDisallowInterceptTouchEvent(true);
@@ -202,9 +208,13 @@ public class MenuItem extends ViewGroup {
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
             default:
+                if(ev.getPointerId(ev.getActionIndex())==0){
+                    canDrag=false;
+                }
 //                Log.e("tianbin","======MenuItem dispatchTouchEvent======ACTION_UP===");
-                if (Math.abs(ev.getRawX() - mFirstX) > mTouchSlop) {
+                if (Math.abs(ev.getX() - mFirstX) > mTouchSlop) {
                     isUserSwiped = true;
                 }
                 if(!qqInterceptFlag){
@@ -232,7 +242,6 @@ public class MenuItem extends ViewGroup {
                 }
                 //释放
                 releaseVelocityTracker();
-                isTouching = false;//没有手指在摸我了
                 break;
         }
         return super.dispatchTouchEvent(ev);
@@ -240,16 +249,22 @@ public class MenuItem extends ViewGroup {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        switch (ev.getAction()){
+        switch (ev.getActionMasked()){
             case MotionEvent.ACTION_MOVE:
+                if(!canDrag){
+                    break;
+                }
+                int pointerIndex=ev.findPointerIndex(0);
                 //屏蔽滑动时的事件(长按事件和侧滑的冲突)
 //                Log.e("tianbin","======MenuItem onInterceptTouchEvent======ACTION_MOVE===111111111111111");
-                if (Math.abs(ev.getRawX() - mFirstX) > mTouchSlop) {
+                if (Math.abs(ev.getX(pointerIndex) - mFirstX) > mTouchSlop) {
 //                    Log.e("tianbin","======MenuItem onInterceptTouchEvent======ACTION_MOVE===22222222222222222");
                     return true;
                 }
                 break;
             case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
+            default:
                 if (getScrollX() > mTouchSlop) {
                     //这里判断落点在内容区域屏蔽点击，内容区域外，允许传递事件继续向下的。。。
                     if (ev.getX() < getWidth() - getScrollX()) {

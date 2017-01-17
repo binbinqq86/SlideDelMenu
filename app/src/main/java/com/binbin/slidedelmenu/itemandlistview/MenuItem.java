@@ -18,7 +18,7 @@ import android.widget.ListView;
  * Created by -- on 2016/11/3.
  * 带侧滑菜单的自定义item
  */
-
+@Deprecated
 public class MenuItem extends ViewGroup {
     private GestureDetector mGestureDetector;
     private ViewDragHelper mDragger;
