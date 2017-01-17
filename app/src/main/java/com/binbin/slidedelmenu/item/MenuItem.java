@@ -221,8 +221,9 @@ public class MenuItem extends ViewGroup {
                     //求伪瞬时速度
                     verTracker.computeCurrentVelocity(1000, mMaxVelocity);
                     final float velocityX = verTracker.getXVelocity(mPointerId);
+                    final float velocityY = verTracker.getYVelocity(mPointerId);
 //                    Log.e("tianbin",qqInterceptFlag+"=============velocityX:"+velocityX);
-                    if (Math.abs(velocityX) > 1000) {//滑动速度超过阈值
+                    if (Math.abs(velocityX) > 1000 && Math.abs(velocityY) < 1000) {//滑动速度超过阈值
                         if (velocityX < -1000) {
                             //平滑展开Menu
                             smoothExpand();
